@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://manoenbower102.github.io/zhportal-hth-com-cn/sitemap.xml
