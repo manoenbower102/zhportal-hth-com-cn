@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>稳定入口 · ng28 漫记</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f6fafb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #1c2e36;
+            line-height: 1.7;
+            padding: 2rem 1.25rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .page {
+            max-width: 780px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* header / article title */
+        .article-header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #d7e6ea;
+            padding-bottom: 1rem;
+        }
+        .article-header h1 {
+            font-size: 1.9rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: #134550;
+            margin-bottom: 0.35rem;
+        }
+        .article-header .meta {
+            font-size: 0.9rem;
+            color: #587982;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1.2rem;
+        }
+        .article-header .meta span {
+            display: inline-flex;
+            align-items: center;
+        }
+        .article-header .meta span::before {
+            content: "·";
+            margin-right: 0.4rem;
+            color: #87b7c2;
+            font-weight: 600;
+        }
+        .article-header .meta span:first-child::before {
+            content: "";
+            margin-right: 0;
+        }
+
+        .lead {
+            font-size: 1.1rem;
+            background: #e6f2f5;
+            padding: 1.2rem 1.5rem;
+            border-radius: 16px;
+            color: #1d3c45;
+            margin: 1.8rem 0 2.2rem;
+            border-left: 4px solid #3b9aa8;
+            line-height: 1.7;
+        }
+
+        /* grid cards – 简洁网格卡片 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.2rem;
+            margin: 2rem 0 2.5rem;
+        }
+        @media (min-width: 520px) {
+            .card-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 1.4rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(48, 103, 114, 0.06);
+            border: 1px solid #dce9ee;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+        .card:hover {
+            box-shadow: 0 8px 22px rgba(40, 90, 100, 0.10);
+            transform: translateY(-2px);
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #145560;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .card h3::before {
+            content: "▹";
+            color: #3b9aa8;
+            font-size: 1.2rem;
+        }
+        .card p {
+            font-size: 0.95rem;
+            color: #2f4b55;
+        }
+
+        /* 正文段落 */
+        .body-text {
+            margin: 2rem 0 1.5rem;
+        }
+        .body-text p {
+            margin-bottom: 1.2rem;
+            text-indent: 2em;
+        }
+
+        /* 引用提示块 */
+        .pull-quote {
+            background: #eef7f9;
+            border-radius: 24px;
+            padding: 1.6rem 2rem;
+            margin: 2rem 0;
+            border: 1px solid #cce3e9;
+            position: relative;
+            color: #1b404b;
+        }
+        .pull-quote p {
+            font-style: normal;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 0.5rem;
+        }
+        .pull-quote .quote-source {
+            display: block;
+            font-size: 0.85rem;
+            color: #5c8894;
+            text-align: right;
+            margin-top: 0.3rem;
+        }
+        .pull-quote::before {
+            content: "“";
+            font-size: 3.2rem;
+            line-height: 1;
+            color: #3b9aa8;
+            opacity: 0.4;
+            position: absolute;
+            left: 1rem;
+            top: 0.2rem;
+        }
+
+        /* 访问句 – 自然嵌入链接 */
+        .visit-sentence {
+            background: #ffffff;
+            padding: 1.4rem 1.8rem;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(52, 108, 120, 0.06);
+            margin: 2.2rem 0;
+            border: 1px solid #d2e4ea;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .visit-sentence a {
+            color: #226c7c;
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 2px solid #9ac8d4;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .visit-sentence a:hover {
+            color: #0f505f;
+            border-bottom-color: #226c7c;
+        }
+
+        /* FAQ 摘要 */
+        .faq-mini {
+            background: #f0f7f9;
+            border-radius: 20px;
+            padding: 1.6rem 1.8rem;
+            margin: 2rem 0;
+        }
+        .faq-mini h4 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #185a67;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.02em;
+        }
+        .faq-mini .item {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #c9dee5;
+        }
+        .faq-mini .item:last-child {
+            border-bottom: none;
+        }
+        .faq-mini .q {
+            font-weight: 450;
+            color: #163c47;
+            margin-bottom: 0.2rem;
+        }
+        .faq-mini .a {
+            color: #3a606c;
+            font-size: 0.9rem;
+            padding-left: 0.6rem;
+        }
+
+        .footer-note {
+            margin-top: 3rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid #d0e1e7;
+            font-size: 0.85rem;
+            color: #6d929e;
+            text-align: center;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            body { padding: 1.2rem 0.9rem; }
+            .article-header h1 { font-size: 1.6rem; }
+            .lead { padding: 1rem 1.2rem; }
+            .pull-quote { padding: 1.3rem 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- 文章标题 + 元数据 -->
+    <header class="article-header">
+        <h1>页面即路径：从稳定入口理解 ng28</h1>
+        <div class="meta">
+            <span>随笔 · 界面笔记</span>
+            <span>大约 5 分钟阅读</span>
+        </div>
+    </header>
+
+    <!-- 导语 -->
+    <div class="lead">
+        一个页面的存在，往往不只是它呈现了什么，还在于它如何被找到、如何被稳定地抵达。这次聊的是一个很轻的角度：入口本身。
+    </div>
+
+    <!-- 正文 第一段 -->
+    <div class="body-text">
+        <p>前一阵子整理书签，翻出不少收藏多年的链接，十之七八已经失效或跳转到不知所云的页面。互联网的流动性比想象中大得多，一个稳定的入口，反而变成某种稀缺品。所以当需要为某个服务或信息准备一个长期可用的地点时，域名结构、页面状态、缓存逻辑这些细节就成了真正值得关注的事情。</p>
+
+        <p>这篇文章并不是教程或测评，更接近一段记录。关于我如何理解 <strong>ng28</strong> 这个简易的页面标记，以及它背后代表的那类“一直能用”的界面。它没有什么炫目的动效，也没有复杂的交互，但恰是这种克制，让它更像一个朴素的起点。</p>
+    </div>
+
+    <!-- 网格卡片 · 特点与场景 -->
+    <div class="card-grid">
+        <div class="card">
+            <h3>结构即说明</h3>
+            <p>没有多余的装饰层，每一段内容都承担解释功能。如果你只是想知道它是什么，浏览一遍就够了。</p>
+        </div>
+        <div class="card">
+            <h3>长期主义</h3>
+            <p>链接只要不变更，页面就一直存在。这种稳定性对需要反复确认信息的人来说，比任何花哨的欢迎页都重要。</p>
+        </div>
+        <div class="card">
+            <h3>低语境友好</h3>
+            <p>无论你从哪里来，页面都提供完整的上下文。不需要提前了解背景，也能明白它的定位。</p>
+        </div>
+        <div class="card">
+            <h3>移动优先</h3>
+            <p>在手机屏幕上，排版、点击区域、字体大小都经过调整，不需要缩放或横向滚动。</p>
+        </div>
+    </div>
+
+    <!-- 第二段正文 -->
+    <div class="body-text">
+        <p>最开始注意到 <a href="https://portal--ng28.com" style="color:#1b6c7c; text-decoration: underline; text-underline-offset: 3px;">ng28</a> 这个地址，是因为它的命名方式。双横线并不常见，反而让人记住。我把它放在书签栏的固定位置，每隔一段时间打开看看，页面依旧，内容还是那么干净。这种不变，在频繁改版和重构的浪潮里，反而成了一种风格。</p>
+
+        <p>有时候，一个页面最好的自我介绍就是它自己的存在。不需要弹窗、公告或者催促注册，只要提供清晰的段落和一条可见的路径。从使用者的角度来说，能快速理解“我在哪、这里提供什么、下一步怎么走”，就足够了。</p>
+    </div>
+
+    <!-- 引用提示 -->
+    <div class="pull-quote">
+        <p>一个足够稳定的入口，本身就是对访问者最大的尊重。它不打扰，不猜测，只是安静地等在那里，在你需要的时候递上信息。</p>
+        <span class="quote-source">—— 来自某次关于站点设计的闲聊</span>
+    </div>
+
+    <!-- 自然访问句 -->
+    <div class="visit-sentence">
+        如果你也想看看这个轻巧的页面，可以直接通过 <a href="https://portal--ng28.com">ng28</a> 找到它，像打开一本薄薄的册子。
+    </div>
+
+    <!-- FAQ 摘要（简版） -->
+    <div class="faq-mini">
+        <h4>一些可能好奇的事情</h4>
+        <div class="item">
+            <div class="q">这个页面需要登录吗？</div>
+            <div class="a">不需要。直接访问即可，没有身份验证门槛。</div>
+        </div>
+        <div class="item">
+            <div class="q">内容会频繁更新吗？</div>
+            <div class="a">不频繁。页面更偏向固定说明而非动态博客，变动很少。</div>
+        </div>
+        <div class="item">
+            <div class="q">移动端体验如何？</div>
+            <div class="a">排版自适应，按钮和链接都做了触控优化，单手操作友好。</div>
+        </div>
+    </div>
+
+    <!-- 结尾 -->
+    <div class="footer-note">
+        —— 写于一个晴朗的下午 · 记录一次页面观察 ——
+    </div>
+
+</div>
+</body>
+</html>
